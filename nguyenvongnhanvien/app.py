@@ -63,6 +63,16 @@ st.subheader(f"📋 Lịch làm việc của {ten_nhan_vien}")
 for thu, gio in lich.items():
     st.write(f"{thu}: {gio}")
 
+# Nút gửi lịch làm việc
+if st.button("📤 Gửi lịch làm việc"):
+    st.success(f"✅ Lịch làm việc của {ten_nhan_vien} đã được gửi thành công!")
+    # Bạn có thể lưu vào cơ sở dữ liệu, gửi qua email, hoặc lưu vào file ở đây
+    # Ví dụ: lưu vào file
+    with open(f"lich_lam_viec_{ten_nhan_vien}.txt", "w") as f:
+        for thu, gio in lich.items():
+            f.write(f"{thu}: {gio}\n")
+    st.write("Lịch làm việc đã được lưu trong file.")
+
 # Chức năng admin cho phép chỉnh sửa lịch và trạng thái nghỉ việc đột xuất
 admin_password = read_admin_password()
 input_password = st.text_input("🔒 Mật khẩu Admin", type="password")
