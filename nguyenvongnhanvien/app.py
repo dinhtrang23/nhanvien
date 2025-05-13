@@ -6,6 +6,18 @@ from datetime import datetime
 admin_username = "admin"
 admin_password = "admin123"
 
+# Hàm đọc tên nhân viên từ file nhan_vien.txt
+def get_employee_names(filename="nhan_vien.txt"):
+    try:
+        with open(filename, "r") as file:
+            # Đọc danh sách tên nhân viên từ file, mỗi tên 1 dòng
+            employees = file.readlines()
+        # Loại bỏ ký tự newline và trả về danh sách tên nhân viên
+        return [name.strip() for name in employees]
+    except FileNotFoundError:
+        st.error(f"Không tìm thấy file {filename}.")
+        return []
+
 # Hàm lưu lịch làm việc vào file Excel
 def save_schedule_to_excel(schedule, filename="lich_lam_viec.xlsx"):
     df = pd.DataFrame(schedule)
@@ -14,40 +26,44 @@ def save_schedule_to_excel(schedule, filename="lich_lam_viec.xlsx"):
 
 # Hàm tạo lịch làm việc cho nhân viên
 def create_schedule():
-    # Nhập tên nhân viên
-    ten_nhan_vien = st.text_input("Nhập tên nhân viên:")
+    # Lấy danh sách nhân viên từ file nhan_vien.txt
+    employee_names = get_employee_names()
 
-    if ten_nhan_vien:
+    if employee_names:
+        # Cho nhân viên chọn tên từ danh sách đã lấy từ file
+        ten_nhan_vien = st.selectbox("Chọn tên nhân viên:", employee_names)
+
         # Lưu lịch làm việc theo tên nhân viên
-        lich = {}
+        if ten_nhan_vien:
+            lich = {}
 
-        # Lặp qua các ngày trong tuần
-        for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
-            col1, col2 = st.columns(2)
+            # Lặp qua các ngày trong tuần
+            for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
+                col1, col2 = st.columns(2)
 
-            with col1:
-                gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start")
+                with col1:
+                    gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start")
 
-            with col2:
-                gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end")
+                with col2:
+                    gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end")
 
-            if gio_bat_dau and gio_ket_thuc:
-                # Nếu chọn giờ, đánh dấu là làm việc (L)
-                lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
-            else:
-                # Nếu không chọn giờ thì mặc định là nghỉ (H)
-                lich[thu] = "H"
-        
-        # Hiển thị lịch làm việc và lưu vào Excel
-        st.write(f"Lịch làm việc của {ten_nhan_vien}:")
-        st.write(lich)
+                if gio_bat_dau and gio_ket_thuc:
+                    # Nếu chọn giờ, đánh dấu là làm việc (L)
+                    lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
+                else:
+                    # Nếu không chọn giờ thì mặc định là nghỉ (H)
+                    lich[thu] = "H"
+            
+            # Hiển thị lịch làm việc và lưu vào Excel
+            st.write(f"Lịch làm việc của {ten_nhan_vien}:")
+            st.write(lich)
 
-        # Lưu lịch vào Excel
-        if st.button("Lưu lịch"):
-            save_schedule_to_excel(lich)
-            st.success("Lịch làm việc đã được lưu vào file Excel.")
+            # Lưu lịch vào Excel
+            if st.button("Lưu lịch"):
+                save_schedule_to_excel(lich)
+                st.success("Lịch làm việc đã được lưu vào file Excel.")
     else:
-        st.warning("Vui lòng nhập tên nhân viên để tạo lịch.")
+        st.warning("Không có nhân viên nào trong danh sách.")
 
 # Hàm cho đăng nhập admin
 def admin_login():
