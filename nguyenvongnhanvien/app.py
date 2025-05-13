@@ -1,145 +1,69 @@
 import streamlit as st
-from openpyxl import Workbook
+import pandas as pd
+import hashlib
+from datetime import datetime
 
-# Đọc mật khẩu admin từ file
-def read_admin_password():
-    try:
-        with open("admin_password.txt", "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        return "admin123"  # Mặc định nếu không tìm thấy file
+# Hàm kiểm tra và lưu lịch làm việc vào file Excel
+def save_schedule_to_excel(schedule, filename="lich_lam_viec.xlsx"):
+    df = pd.DataFrame(schedule)
+    with pd.ExcelWriter(filename, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Lịch Làm Việc")
 
-# Cập nhật mật khẩu admin vào file
-def update_admin_password(new_password):
-    with open("admin_password.txt", "w") as f:
-        f.write(new_password)
+# Hàm tạo lịch làm việc cho nhân viên
+def create_schedule():
+    # Nhập tên nhân viên
+    ten_nhan_vien = st.text_input("Nhập tên nhân viên:")
+    
+    if ten_nhan_vien:
+        # Lưu lịch làm việc theo tên nhân viên
+        lich = {}
 
-# Thiết lập cấu hình trang
-st.set_page_config(page_title="Đăng ký lịch làm việc", layout="centered")
-st.title("📅 Đăng ký lịch làm việc theo ngày")
+        # Lặp qua các ngày trong tuần
+        for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
+            col1, col2 = st.columns(2)
 
-# Đọc danh sách nhân viên từ file nhan_vien.txt
-try:
-    with open("nhan_vien.txt", "r", encoding="utf-8") as f:
-        danh_sach_nhan_vien = [ten.strip() for ten in f.readlines() if ten.strip()]
-except FileNotFoundError:
-    st.error("❌ Không tìm thấy file nhan_vien.txt. Vui lòng tạo file này trước.")
-    st.stop()
+            with col1:
+                gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start_{str(hash(ten_nhan_vien))}")
 
-# Dữ liệu lưu đăng ký
-schedule_data = {}
+            with col2:
+                gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end_{str(hash(ten_nhan_vien))}")
 
-# Giao diện đăng ký lịch làm việc cho nhân viên
-st.header("📝 Chọn lịch làm việc")
+            if gio_bat_dau and gio_ket_thuc:
+                # Nếu chọn giờ, đánh dấu là làm việc (L)
+                lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
+            else:
+                # Nếu không chọn giờ thì mặc định là nghỉ (H)
+                lich[thu] = "H"
+        
+        # Hiển thị lịch làm việc và lưu vào Excel
+        st.write(f"Lịch làm việc của {ten_nhan_vien}:")
+        st.write(lich)
 
-# Cho nhân viên chọn tên
-ten_nhan_vien = st.selectbox("🔽 Chọn tên nhân viên", danh_sach_nhan_vien)
-
-# Khởi tạo lịch cho nhân viên chọn
-lich = {}
-
-# Nhân viên chọn các ngày và giờ làm việc theo chiều ngang
-for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
-    col1, col2 = st.columns(2)
-
-    with col1:
-        gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start")
-
-    with col2:
-        gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end")
-
-    if gio_bat_dau and gio_ket_thuc:
-        # Nếu chọn giờ, đánh dấu là làm việc (L)
-        lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
+        # Lưu lịch vào Excel
+        if st.button("Lưu lịch"):
+            save_schedule_to_excel(lich)
+            st.success("Lịch làm việc đã được lưu vào file Excel.")
     else:
-        # Nếu không chọn giờ thì mặc định là nghỉ (H)
-        lich[thu] = "H"
+        st.warning("Vui lòng nhập tên nhân viên để tạo lịch.")
 
-# Lưu lại lịch làm việc của nhân viên đã chọn
-schedule_data[ten_nhan_vien] = lich
+# Trang đăng nhập admin
+def admin_login():
+    admin_username = st.text_input("Nhập tên đăng nhập admin:")
+    admin_password = st.text_input("Nhập mật khẩu admin:", type="password")
 
-# Hiển thị lại lịch làm việc đã chọn
-st.subheader(f"📋 Lịch làm việc của {ten_nhan_vien}")
-for thu, gio in lich.items():
-    st.write(f"{thu}: {gio}")
+    if admin_username == "admin" and admin_password == "admin":
+        st.success("Đăng nhập thành công!")
+        return True
+    else:
+        st.error("Sai tên đăng nhập hoặc mật khẩu.")
+        return False
 
-# Nút gửi lịch làm việc
-if st.button("📤 Gửi lịch làm việc"):
-    st.success(f"✅ Lịch làm việc của {ten_nhan_vien} đã được gửi thành công!")
-    # Bạn có thể lưu vào cơ sở dữ liệu, gửi qua email, hoặc lưu vào file ở đây
-    # Ví dụ: lưu vào file
-    with open(f"lich_lam_viec_{ten_nhan_vien}.txt", "w") as f:
-        for thu, gio in lich.items():
-            f.write(f"{thu}: {gio}\n")
-    st.write("Lịch làm việc đã được lưu trong file.")
+# Trang chính
+def main():
+    st.title("Ứng dụng Quản Lý Lịch Làm Việc")
 
-# Chức năng admin cho phép chỉnh sửa lịch và trạng thái nghỉ việc đột xuất
-admin_password = read_admin_password()
-input_password = st.text_input("🔒 Mật khẩu Admin", type="password")
+    if admin_login():
+        create_schedule()
 
-if input_password == admin_password:  # Kiểm tra mật khẩu Admin từ file
-    st.success("Bạn đã đăng nhập với quyền Admin")
-    st.header("⚙️ Quản lý lịch làm việc")
-
-    # Admin có thể chỉnh sửa lịch của nhân viên
-    for ten in danh_sach_nhan_vien:
-        with st.expander(f"Chỉnh sửa lịch làm việc của {ten}"):
-            lich = schedule_data[ten]
-            for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten}_{thu}_start", disabled=False)
-
-                with col2:
-                    gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten}_{thu}_end", disabled=False)
-
-                if gio_bat_dau and gio_ket_thuc:
-                    # Nếu chọn giờ, đánh dấu là làm việc (L)
-                    lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
-                else:
-                    # Nếu không chọn giờ thì mặc định là nghỉ (H)
-                    lich[thu] = "H"
-            schedule_data[ten] = lich
-
-    # Thay đổi mật khẩu admin
-    st.header("🔑 Thay đổi mật khẩu Admin")
-    new_password = st.text_input("Mật khẩu mới", type="password")
-    if st.button("Lưu mật khẩu mới"):
-        if new_password:
-            update_admin_password(new_password)
-            st.success("Mật khẩu mới đã được lưu!")
-        else:
-            st.error("Vui lòng nhập mật khẩu mới.")
-
-    # Hàm xuất Excel chia sheet theo tuần
-    def export_excel_multi_sheet(schedule_data):
-        wb = Workbook()
-        wb.remove(wb.active)  # Xoá sheet mặc định
-
-        sheet = wb.create_sheet(title="Lịch làm việc")
-        sheet.append(["Họ tên"] + ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"])
-
-        for ten, lich in schedule_data.items():
-            row = [ten]
-            for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
-                # Nếu có giờ làm việc thì điền giờ, nếu không có giờ thì ghi "Nghỉ"
-                row.append(lich.get(thu, "H"))
-            sheet.append(row)
-
-        file_path = "lich_lam_viec.xlsx"
-        wb.save(file_path)
-        return file_path
-
-    # Nút tải file Excel cho Admin
-    if st.button("📥 Tải xuống lịch làm việc"):
-        file_path = export_excel_multi_sheet(schedule_data)
-        with open(file_path, "rb") as f:
-            st.download_button(
-                label="⬇️ Nhấn để tải Excel",
-                data=f,
-                file_name="lich_lam_viec.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-else:
-    st.warning("🔑 Bạn chưa nhập mật khẩu Admin đúng.")
+if __name__ == "__main__":
+    main()
