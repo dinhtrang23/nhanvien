@@ -10,7 +10,7 @@ ADMIN_FILE = "admin_pass.txt"
 def lay_mat_khau_admin():
     if not os.path.exists(ADMIN_FILE):
         with open(ADMIN_FILE, "w") as f:
-            f.write("1234")  # mật khẩu mặc định
+            f.write("1234")
     with open(ADMIN_FILE, "r") as f:
         return f.read().strip()
 
@@ -43,13 +43,7 @@ def hien_thi_form_tuan():
         with st.expander(f"{thu_trong_tuan[i]} - {ngay.strftime('%d/%m/%Y')}"):
             gio_bat_dau = st.time_input(f"Giờ bắt đầu ({thu_trong_tuan[i]})", key=f"bat_dau_{i}")
             gio_ket_thuc = st.time_input(f"Giờ kết thúc ({thu_trong_tuan[i]})", key=f"ket_thuc_{i}")
-            du_lieu_gui.append({
-        "Họ tên": ho_ten,
-        "Thứ": thu_trong_tuan[i],
-        "Ngày": ngay.strftime("%d/%m/%Y"),
-        "Giờ bắt đầu": gio_bat_dau.strftime("%H:%M") if gio_bat_dau != gio_ket_thuc else "",
-        "Giờ kết thúc": gio_ket_thuc.strftime("%H:%M") if gio_bat_dau != gio_ket_thuc else ""
-    })
+            if gio_bat_dau != gio_ket_thuc:
                 du_lieu_gui.append({
                     "Họ tên": ho_ten,
                     "Thứ": thu_trong_tuan[i],
@@ -57,13 +51,18 @@ def hien_thi_form_tuan():
                     "Giờ bắt đầu": gio_bat_dau.strftime("%H:%M"),
                     "Giờ kết thúc": gio_ket_thuc.strftime("%H:%M")
                 })
+            else:
+                du_lieu_gui.append({
+                    "Họ tên": ho_ten,
+                    "Thứ": thu_trong_tuan[i],
+                    "Ngày": ngay.strftime("%d/%m/%Y"),
+                    "Giờ bắt đầu": "Nghỉ",
+                    "Giờ kết thúc": "Nghỉ"
+                })
 
     if st.button("✅ Gửi nguyện vọng"):
-        if du_lieu_gui:
-            ghi_du_lieu(ho_ten, du_lieu_gui)
-            st.success("Đã gửi nguyện vọng thành công!")
-        else:
-            st.warning("Bạn chưa chọn giờ làm ngày nào!")
+        ghi_du_lieu(ho_ten, du_lieu_gui)
+        st.success("Đã gửi nguyện vọng thành công!")
 
 def doc_danh_sach_nhan_vien():
     try:
@@ -75,7 +74,7 @@ def doc_danh_sach_nhan_vien():
 # --- Giao diện chính ---
 hien_thi_form_tuan()
 
-# --- KHU VỰC ADMIN: xem và xóa dữ liệu ---
+# --- KHU VỰC ADMIN ---
 st.markdown("---")
 st.subheader("🔐 Khu vực Admin")
 
@@ -85,7 +84,6 @@ with st.expander("Đăng nhập admin"):
 
     if password == admin_password:
         st.success("✅ Đăng nhập thành công!")
-
         if os.path.exists(FILE_NAME):
             with open(FILE_NAME, "rb") as f:
                 st.download_button(
@@ -94,7 +92,6 @@ with st.expander("Đăng nhập admin"):
                     file_name=FILE_NAME,
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
-
         if st.button("🗑️ Xóa toàn bộ dữ liệu"):
             os.remove(FILE_NAME)
             tao_file_excel()
