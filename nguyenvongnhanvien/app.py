@@ -36,25 +36,36 @@ schedule_data = {}
 # Giao diện đăng ký lịch làm việc cho nhân viên
 st.header("📝 Chọn lịch làm việc")
 
-# Chức năng cho nhân viên chọn lịch làm việc
-for ten in danh_sach_nhan_vien:
-    with st.expander(f"👤 {ten}"):
-        lich = {}
-        for tuan in range(1, so_tuan + 1):
-            st.markdown(f"#### 📆 Tuần {tuan}")
-            cols = st.columns(7)
-            for i, thu in enumerate(thu_trong_tuan):
-                with cols[i]:
-                    gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten}_T{tuan}_{thu}_start")
-                    gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten}_T{tuan}_{thu}_end")
-                    
-                    if gio_bat_dau and gio_ket_thuc:
-                        # Nếu chọn giờ, đánh dấu là làm việc (L)
-                        lich[f"Tuần {tuan} - {thu}"] = f"{gio_bat_dau} - {gio_ket_thuc}"
-                    else:
-                        # Nếu không chọn giờ thì mặc định là nghỉ (H)
-                        lich[f"Tuần {tuan} - {thu}"] = "H"
-        schedule_data[ten] = lich
+# Cho nhân viên chọn tên
+ten_nhan_vien = st.selectbox("🔽 Chọn tên nhân viên", danh_sach_nhan_vien)
+
+# Khởi tạo lịch cho nhân viên chọn
+lich = {}
+
+for tuan in range(1, so_tuan + 1):
+    st.markdown(f"#### 📆 Tuần {tuan}")
+    cols = st.columns(7)
+    for i, thu in enumerate(thu_trong_tuan):
+        with cols[i]:
+            gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_T{tuan}_{thu}_start")
+            gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_T{tuan}_{thu}_end")
+            
+            if gio_bat_dau and gio_ket_thuc:
+                # Nếu chọn giờ, đánh dấu là làm việc (L)
+                lich[f"Tuần {tuan} - {thu}"] = f"{gio_bat_dau} - {gio_ket_thuc}"
+            else:
+                # Nếu không chọn giờ thì mặc định là nghỉ (H)
+                lich[f"Tuần {tuan} - {thu}"] = "H"
+
+# Lưu lại lịch làm việc của nhân viên đã chọn
+schedule_data[ten_nhan_vien] = lich
+
+# Hiển thị lại lịch làm việc đã chọn
+st.subheader(f"📋 Lịch làm việc của {ten_nhan_vien}")
+for tuan in range(1, so_tuan + 1):
+    st.markdown(f"#### 📆 Tuần {tuan}")
+    for thu in thu_trong_tuan:
+        st.write(f"{thu}: {lich.get(f'Tuần {tuan} - {thu}', 'H')}")
 
 # Chức năng admin cho phép chỉnh sửa lịch và trạng thái nghỉ việc đột xuất
 admin_password = read_admin_password()
@@ -93,36 +104,36 @@ if input_password == admin_password:  # Kiểm tra mật khẩu Admin từ file
             st.success("Mật khẩu mới đã được lưu!")
         else:
             st.error("Vui lòng nhập mật khẩu mới.")
+
+    # Hàm xuất Excel chia sheet theo tuần
+    def export_excel_multi_sheet(schedule_data):
+        wb = Workbook()
+        wb.remove(wb.active)  # Xoá sheet mặc định
+
+        for tuan in range(1, 5):
+            sheet = wb.create_sheet(title=f"Tuần {tuan}")
+            sheet.append(["Họ tên"] + thu_trong_tuan)
+
+            for ten, lich in schedule_data.items():
+                row = [ten]
+                for thu in thu_trong_tuan:
+                    # Nếu có giờ làm việc thì điền giờ, nếu không có giờ thì ghi "Nghỉ"
+                    row.append(lich.get(f"Tuần {tuan} - {thu}", "H"))
+                sheet.append(row)
+
+        file_path = "lich_lam_viec_tuan.xlsx"
+        wb.save(file_path)
+        return file_path
+
+    # Nút tải file Excel cho Admin
+    if st.button("📥 Tải xuống lịch làm việc"):
+        file_path = export_excel_multi_sheet(schedule_data)
+        with open(file_path, "rb") as f:
+            st.download_button(
+                label="⬇️ Nhấn để tải Excel",
+                data=f,
+                file_name="lich_lam_viec.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 else:
     st.warning("🔑 Bạn chưa nhập mật khẩu Admin đúng.")
-
-# Hàm xuất Excel chia sheet theo tuần
-def export_excel_multi_sheet(schedule_data):
-    wb = Workbook()
-    wb.remove(wb.active)  # Xoá sheet mặc định
-
-    for tuan in range(1, 5):
-        sheet = wb.create_sheet(title=f"Tuần {tuan}")
-        sheet.append(["Họ tên"] + thu_trong_tuan)
-
-        for ten, lich in schedule_data.items():
-            row = [ten]
-            for thu in thu_trong_tuan:
-                # Nếu có giờ làm việc thì điền giờ, nếu không có giờ thì ghi "Nghỉ"
-                row.append(lich.get(f"Tuần {tuan} - {thu}", "H"))
-            sheet.append(row)
-
-    file_path = "lich_lam_viec_tuan.xlsx"
-    wb.save(file_path)
-    return file_path
-
-# Nút tải file Excel
-if st.button("📥 Tải xuống lịch làm việc"):
-    file_path = export_excel_multi_sheet(schedule_data)
-    with open(file_path, "rb") as f:
-        st.download_button(
-            label="⬇️ Nhấn để tải Excel",
-            data=f,
-            file_name="lich_lam_viec.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
