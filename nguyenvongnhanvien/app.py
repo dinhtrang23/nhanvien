@@ -16,7 +16,7 @@ def update_admin_password(new_password):
 
 # Thiết lập cấu hình trang
 st.set_page_config(page_title="Đăng ký lịch làm việc", layout="centered")
-st.title("📅 Đăng ký lịch làm việc theo tuần")
+st.title("📅 Đăng ký lịch làm việc theo ngày")
 
 # Đọc danh sách nhân viên từ file nhan_vien.txt
 try:
@@ -25,10 +25,6 @@ try:
 except FileNotFoundError:
     st.error("❌ Không tìm thấy file nhan_vien.txt. Vui lòng tạo file này trước.")
     st.stop()
-
-# Cấu hình cơ bản
-thu_trong_tuan = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]
-so_tuan = 4
 
 # Dữ liệu lưu đăng ký
 schedule_data = {}
@@ -42,30 +38,25 @@ ten_nhan_vien = st.selectbox("🔽 Chọn tên nhân viên", danh_sach_nhan_vien
 # Khởi tạo lịch cho nhân viên chọn
 lich = {}
 
-for tuan in range(1, so_tuan + 1):
-    st.markdown(f"#### 📆 Tuần {tuan}")
-    cols = st.columns(7)
-    for i, thu in enumerate(thu_trong_tuan):
-        with cols[i]:
-            gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_T{tuan}_{thu}_start")
-            gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_T{tuan}_{thu}_end")
-            
-            if gio_bat_dau and gio_ket_thuc:
-                # Nếu chọn giờ, đánh dấu là làm việc (L)
-                lich[f"Tuần {tuan} - {thu}"] = f"{gio_bat_dau} - {gio_ket_thuc}"
-            else:
-                # Nếu không chọn giờ thì mặc định là nghỉ (H)
-                lich[f"Tuần {tuan} - {thu}"] = "H"
+# Nhân viên chọn các ngày và giờ làm việc
+for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
+    gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start")
+    gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end")
+
+    if gio_bat_dau and gio_ket_thuc:
+        # Nếu chọn giờ, đánh dấu là làm việc (L)
+        lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
+    else:
+        # Nếu không chọn giờ thì mặc định là nghỉ (H)
+        lich[thu] = "H"
 
 # Lưu lại lịch làm việc của nhân viên đã chọn
 schedule_data[ten_nhan_vien] = lich
 
 # Hiển thị lại lịch làm việc đã chọn
 st.subheader(f"📋 Lịch làm việc của {ten_nhan_vien}")
-for tuan in range(1, so_tuan + 1):
-    st.markdown(f"#### 📆 Tuần {tuan}")
-    for thu in thu_trong_tuan:
-        st.write(f"{thu}: {lich.get(f'Tuần {tuan} - {thu}', 'H')}")
+for thu, gio in lich.items():
+    st.write(f"{thu}: {gio}")
 
 # Chức năng admin cho phép chỉnh sửa lịch và trạng thái nghỉ việc đột xuất
 admin_password = read_admin_password()
@@ -79,20 +70,16 @@ if input_password == admin_password:  # Kiểm tra mật khẩu Admin từ file
     for ten in danh_sach_nhan_vien:
         with st.expander(f"Chỉnh sửa lịch làm việc của {ten}"):
             lich = schedule_data[ten]
-            for tuan in range(1, so_tuan + 1):
-                st.markdown(f"#### 📆 Tuần {tuan}")
-                cols = st.columns(7)
-                for i, thu in enumerate(thu_trong_tuan):
-                    with cols[i]:
-                        gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten}_T{tuan}_{thu}_start", disabled=False)
-                        gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten}_T{tuan}_{thu}_end", disabled=False)
-                        
-                        if gio_bat_dau and gio_ket_thuc:
-                            # Nếu chọn giờ, đánh dấu là làm việc (L)
-                            lich[f"Tuần {tuan} - {thu}"] = f"{gio_bat_dau} - {gio_ket_thuc}"
-                        else:
-                            # Nếu không chọn giờ thì mặc định là nghỉ (H)
-                            lich[f"Tuần {tuan} - {thu}"] = "H"
+            for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
+                gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten}_{thu}_start", disabled=False)
+                gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten}_{thu}_end", disabled=False)
+
+                if gio_bat_dau and gio_ket_thuc:
+                    # Nếu chọn giờ, đánh dấu là làm việc (L)
+                    lich[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
+                else:
+                    # Nếu không chọn giờ thì mặc định là nghỉ (H)
+                    lich[thu] = "H"
             schedule_data[ten] = lich
 
     # Thay đổi mật khẩu admin
@@ -110,18 +97,17 @@ if input_password == admin_password:  # Kiểm tra mật khẩu Admin từ file
         wb = Workbook()
         wb.remove(wb.active)  # Xoá sheet mặc định
 
-        for tuan in range(1, 5):
-            sheet = wb.create_sheet(title=f"Tuần {tuan}")
-            sheet.append(["Họ tên"] + thu_trong_tuan)
+        sheet = wb.create_sheet(title="Lịch làm việc")
+        sheet.append(["Họ tên"] + ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"])
 
-            for ten, lich in schedule_data.items():
-                row = [ten]
-                for thu in thu_trong_tuan:
-                    # Nếu có giờ làm việc thì điền giờ, nếu không có giờ thì ghi "Nghỉ"
-                    row.append(lich.get(f"Tuần {tuan} - {thu}", "H"))
-                sheet.append(row)
+        for ten, lich in schedule_data.items():
+            row = [ten]
+            for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
+                # Nếu có giờ làm việc thì điền giờ, nếu không có giờ thì ghi "Nghỉ"
+                row.append(lich.get(thu, "H"))
+            sheet.append(row)
 
-        file_path = "lich_lam_viec_tuan.xlsx"
+        file_path = "lich_lam_viec.xlsx"
         wb.save(file_path)
         return file_path
 
