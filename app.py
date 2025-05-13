@@ -55,9 +55,9 @@ def hien_thi_form_tuan():
 
             col1, col2 = st.columns(2)
             with col1:
-                gio_bat_dau = st.time_input("Giờ bắt đầu", key=f"start_{i}")
+                gio_bat_dau = st.time_input("Giờ bắt đầu", key=f"start_{i}", value=datetime.strptime("00:00", "%H:%M").time())
             with col2:
-                gio_ket_thuc = st.time_input("Giờ kết thúc", key=f"end_{i}")
+                gio_ket_thuc = st.time_input("Giờ kết thúc", key=f"end_{i}", value=datetime.strptime("00:00", "%H:%M").time())
 
             ca_lam_dict[i] = (thu, ngay, gio_bat_dau, gio_ket_thuc)
 
@@ -67,7 +67,10 @@ def hien_thi_form_tuan():
         if submitted:
             for i in range(7):
                 thu, ngay, bat_dau, ket_thuc = ca_lam_dict[i]
-                ca_lam = f"{bat_dau.strftime('%H:%M')} - {ket_thuc.strftime('%H:%M')}"
+                if bat_dau == ket_thuc:
+                    ca_lam = "Nghỉ"
+                else:
+                    ca_lam = f"{bat_dau.strftime('%H:%M')} - {ket_thuc.strftime('%H:%M')}"
                 luu_nguyen_vong(ho_ten, tuan_bat_dau, thu, ngay, ca_lam, ghi_chu)
             st.success("✅ Đã gửi nguyện vọng thành công cho cả tuần!")
 
