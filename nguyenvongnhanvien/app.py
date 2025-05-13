@@ -103,13 +103,3 @@ with st.expander("Đăng nhập admin"):
                 st.error("❌ Mật khẩu không khớp hoặc rỗng!")
     elif password:
         st.error("❌ Mật khẩu sai. Vui lòng thử lại.")
-"""
-
-# Cập nhật lại file zip với app.py mới
-zip_path = "/mnt/data/nguyen_vong_app_hang_ngang.zip"
-with zipfile.ZipFile(zip_path, "w") as zipf:
-    zipf.writestr("app.py", updated_app_py_code)
-    zipf.writestr("nhan_vien.txt", nhan_vien_txt)
-    zipf.writestr("requirements.txt", requirements_txt)
-
-zip_path
