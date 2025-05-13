@@ -58,12 +58,62 @@ def admin_login():
         st.error("Sai tên đăng nhập hoặc mật khẩu.")
         return False
 
+# Trang chỉnh sửa lịch của nhân viên cho admin
+def edit_schedule_admin():
+    # Hiển thị danh sách nhân viên đã có
+    try:
+        df = pd.read_excel("lich_lam_viec.xlsx", sheet_name="Lịch Làm Việc")
+        nhan_vien_list = df['Tên nhân viên'].unique()
+    except:
+        nhan_vien_list = []
+    
+    # Admin chọn nhân viên muốn chỉnh sửa lịch
+    ten_nhan_vien = st.selectbox("Chọn nhân viên để chỉnh sửa lịch:", nhan_vien_list)
+    
+    if ten_nhan_vien:
+        # Lấy lịch làm việc hiện tại của nhân viên
+        current_schedule = df[df['Tên nhân viên'] == ten_nhan_vien].iloc[0]
+
+        # Chỉnh sửa lịch
+        lich_moi = {}
+
+        for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
+            col1, col2 = st.columns(2)
+
+            with col1:
+                gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=pd.to_datetime(current_schedule[thu+'_start']).time() if current_schedule[thu+'_start'] != "H" else None, key=f"{ten_nhan_vien}_{thu}_start_{str(hash(ten_nhan_vien))}")
+
+            with col2:
+                gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=pd.to_datetime(current_schedule[thu+'_end']).time() if current_schedule[thu+'_end'] != "H" else None, key=f"{ten_nhan_vien}_{thu}_end_{str(hash(ten_nhan_vien))}")
+
+            if gio_bat_dau and gio_ket_thuc:
+                lich_moi[thu] = f"{gio_bat_dau} - {gio_ket_thuc}"
+            else:
+                lich_moi[thu] = "H"
+
+        # Hiển thị lịch mới và lưu vào Excel
+        st.write(f"Lịch mới của {ten_nhan_vien}:")
+        st.write(lich_moi)
+
+        # Lưu lịch mới vào Excel
+        if st.button("Lưu lịch mới"):
+            df.loc[df['Tên nhân viên'] == ten_nhan_vien, list(lich_moi.keys())] = list(lich_moi.values())
+            save_schedule_to_excel(df)
+            st.success(f"Lịch làm việc của {ten_nhan_vien} đã được chỉnh sửa.")
+    else:
+        st.warning("Vui lòng chọn nhân viên để chỉnh sửa lịch.")
+
 # Trang chính
 def main():
     st.title("Ứng dụng Quản Lý Lịch Làm Việc")
 
     if admin_login():
-        create_schedule()
+        option = st.selectbox("Chọn hành động:", ["Tạo lịch cho nhân viên", "Chỉnh sửa lịch nhân viên"])
+        
+        if option == "Tạo lịch cho nhân viên":
+            create_schedule()
+        elif option == "Chỉnh sửa lịch nhân viên":
+            edit_schedule_admin()
 
 if __name__ == "__main__":
     main()
