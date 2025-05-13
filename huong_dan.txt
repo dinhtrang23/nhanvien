@@ -1,0 +1,18 @@
+# Hướng dẫn sử dụng
+
+## Cách chạy trên máy cá nhân (LAN)
+1. Cài Python nếu chưa có.
+2. Cài thư viện:
+   pip install -r requirements.txt
+3. Chạy ứng dụng:
+   streamlit run app.py
+4. Nếu muốn chạy trong mạng LAN:
+   streamlit run app.py --server.address 0.0.0.0
+
+## Đăng lên Streamlit Cloud (miễn phí)
+1. Tạo tài khoản GitHub: https://github.com
+2. Tạo repo mới, upload toàn bộ file trong thư mục này.
+3. Vào https://streamlit.io/cloud → Connect GitHub → Chọn repo → Deploy.
+4. Sau khi deploy, bạn sẽ có 1 link công khai để nhân viên truy cập.
+
+👉 Lưu ý: mọi người phải chọn đúng tên từ danh sách `nhan_vien.txt`
