@@ -38,10 +38,15 @@ ten_nhan_vien = st.selectbox("🔽 Chọn tên nhân viên", danh_sach_nhan_vien
 # Khởi tạo lịch cho nhân viên chọn
 lich = {}
 
-# Nhân viên chọn các ngày và giờ làm việc
+# Nhân viên chọn các ngày và giờ làm việc theo chiều ngang
 for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
-    gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start")
-    gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_start")
+
+    with col2:
+        gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten_nhan_vien}_{thu}_end")
 
     if gio_bat_dau and gio_ket_thuc:
         # Nếu chọn giờ, đánh dấu là làm việc (L)
@@ -71,8 +76,13 @@ if input_password == admin_password:  # Kiểm tra mật khẩu Admin từ file
         with st.expander(f"Chỉnh sửa lịch làm việc của {ten}"):
             lich = schedule_data[ten]
             for thu in ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]:
-                gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten}_{thu}_start", disabled=False)
-                gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten}_{thu}_end", disabled=False)
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    gio_bat_dau = st.time_input(f"Bắt đầu {thu}", value=None, key=f"{ten}_{thu}_start", disabled=False)
+
+                with col2:
+                    gio_ket_thuc = st.time_input(f"Kết thúc {thu}", value=None, key=f"{ten}_{thu}_end", disabled=False)
 
                 if gio_bat_dau and gio_ket_thuc:
                     # Nếu chọn giờ, đánh dấu là làm việc (L)
