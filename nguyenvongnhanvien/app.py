@@ -20,9 +20,18 @@ def get_employee_names(filename="nhan_vien.txt"):
 
 # Hàm lưu lịch làm việc vào file Excel
 def save_schedule_to_excel(schedule, filename="lich_lam_viec.xlsx"):
+    # Chuyển lịch làm việc thành DataFrame
     df = pd.DataFrame(schedule)
-    with pd.ExcelWriter(filename, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="Lịch Làm Việc")
+    
+    # Kiểm tra xem file Excel đã tồn tại chưa
+    try:
+        # Nếu file đã tồn tại, mở file và thêm dữ liệu vào
+        with pd.ExcelWriter(filename, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
+            df.to_excel(writer, index=False, sheet_name="Lịch Làm Việc")
+    except FileNotFoundError:
+        # Nếu file chưa tồn tại, tạo mới file Excel
+        with pd.ExcelWriter(filename, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Lịch Làm Việc")
 
 # Hàm tạo lịch làm việc cho nhân viên
 def create_schedule():
@@ -60,7 +69,9 @@ def create_schedule():
 
             # Lưu lịch vào Excel
             if st.button("Lưu lịch"):
-                save_schedule_to_excel(lich)
+                # Chuyển lịch làm việc thành DataFrame và lưu vào Excel
+                schedule = {"Nhân viên": [ten_nhan_vien] * len(lich), "Ngày": list(lich.keys()), "Lịch làm việc": list(lich.values())}
+                save_schedule_to_excel(schedule)
                 st.success("Lịch làm việc đã được lưu vào file Excel.")
     else:
         st.warning("Không có nhân viên nào trong danh sách.")
